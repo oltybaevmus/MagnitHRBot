@@ -11,7 +11,7 @@ from googleapiclient.discovery import build
 # ===========================
 # TELEGRAM BOT
 # ===========================
-BOT_TOKEN = os.environ.get('BOT_TOKEN')  # Берется из переменной окружения Railway
+BOT_TOKEN = os.environ.get('BOT_TOKEN')
 if not BOT_TOKEN:
     raise Exception("Переменная окружения BOT_TOKEN не задана!")
 
@@ -29,7 +29,7 @@ if not GOOGLE_CREDENTIALS_JSON:
 GOOGLE_CREDENTIALS = json.loads(GOOGLE_CREDENTIALS_JSON)
 credentials = service_account.Credentials.from_service_account_info(GOOGLE_CREDENTIALS, scopes=SCOPES)
 calendar_service = build('calendar', 'v3', credentials=credentials)
-CALENDAR_ID = 'primary'  # Или укажи свой календарь
+CALENDAR_ID = 'primary'
 
 # ===========================
 # SQLITE DATABASE
@@ -45,6 +45,11 @@ CREATE TABLE IF NOT EXISTS users (
 conn.commit()
 
 # ===========================
+# CALENDLY LINK
+# ===========================
+CALENDLY_LINK = "https://calendly.com/oltybaevmus/magnit_tech"  # <- твоя ссылка
+
+# ===========================
 # /start COMMAND
 # ===========================
 @bot.message_handler(commands=['start'])
@@ -54,11 +59,20 @@ def start(message):
     cursor.execute('INSERT OR IGNORE INTO users (chat_id, username) VALUES (?, ?)', (chat_id, username))
     conn.commit()
     bot.send_message(chat_id, f"Привет, {username}! Ты зарегистрирован для уведомлений о встречах MAGNIT TECH HR-interview.")
+    bot.send_message(chat_id, f"Чтобы записаться на интервью, используй эту ссылку:\n{CALENDLY_LINK}")
+
+# ===========================
+# /book COMMAND (дополнительно)
+# ===========================
+@bot.message_handler(commands=['book'])
+def book(message):
+    chat_id = message.chat.id
+    bot.send_message(chat_id, f"Запишись на HR-интервью по этой ссылке:\n{CALENDLY_LINK}")
 
 # ===========================
 # ADMIN CHAT_ID
 # ===========================
-admin_chat_id = 8452637493  # <- твой Telegram chat_id
+admin_chat_id = 8452637493
 
 # ===========================
 # CHECK CALENDAR FUNCTION
@@ -78,7 +92,6 @@ def check_calendar():
         summary = event.get('summary', 'HR Interview')
         description = event.get('description', '')
 
-        # Telegram username ищем в описании события
         if 'Telegram username:' in description:
             username_line = [line for line in description.splitlines() if 'Telegram username:' in line][0]
             telegram_username = username_line.split(':')[-1].strip()
@@ -101,7 +114,7 @@ def calendar_loop():
     while True:
         try:
             check_calendar()
-            time.sleep(60)  # Проверка каждую минуту
+            time.sleep(60)
         except Exception as e:
             print("Ошибка:", e)
             time.sleep(60)
