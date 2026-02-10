@@ -5,13 +5,13 @@ from datetime import datetime, timedelta
 import telebot
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+import json
 
-# Telegram bot token (берем из переменной окружения)
+# Telegram bot token из переменной окружения
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Google Calendar credentials (JSON как переменная окружения)
-import json
 GOOGLE_CREDENTIALS = json.loads(os.environ.get('GOOGLE_CREDENTIALS_JSON'))
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
@@ -41,6 +41,9 @@ def start(message):
     conn.commit()
     bot.send_message(chat_id, f"Привет, {username}! Ты зарегистрирован для уведомлений о встречах MAGNIT TECH HR-interview.")
 
+# Admin chat_id
+admin_chat_id = 8452637493  # <- сюда вставлен твой Telegram chat_id
+
 # Функция проверки календаря и отправки уведомлений
 def check_calendar():
     now = datetime.utcnow().isoformat() + 'Z'
@@ -66,11 +69,10 @@ def check_calendar():
             result = cursor.fetchone()
             if result:
                 chat_id = result[0]
-                # Отправка уведомления за 30 минут до события
+                # Отправка уведомления кандидату за 30 минут до события
                 if 0 <= (start_time - datetime.utcnow()).total_seconds() <= 1800:
-                    bot.send_message(chat_id, f"Напоминание: ваша встреча '{summary}' начнется в 30 минут.")
-                # Администратору за 15 минут
-                admin_chat_id = YOUR_CHAT_ID  # <- сюда вставь свой Telegram chat_id
+                    bot.send_message(chat_id, f"Напоминание: ваша встреча '{summary}' начнется через 30 минут.")
+                # Отправка уведомления администратору за 15 минут
                 if 0 <= (start_time - datetime.utcnow()).total_seconds() <= 900:
                     bot.send_message(admin_chat_id, f"Напоминание: встреча с {telegram_username} через 15 минут.")
 
